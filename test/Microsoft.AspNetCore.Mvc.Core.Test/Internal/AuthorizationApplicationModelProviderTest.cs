@@ -107,12 +107,47 @@ namespace Microsoft.AspNetCore.Mvc.Internal
 
             // Act
             provider.OnProvidersExecuting(context);
+
             var firstPolicy = await AuthorizationPolicy.CombineAsync(authorizationPolicyProvider, authorizeData);
             var secondPolicy = await AuthorizationPolicy.CombineAsync(authorizationPolicyProvider, authorizeData);
 
             // Assert
             Assert.Equal(1, firstPolicy.Requirements.Count);
             Assert.Equal(2, secondPolicy.Requirements.Count);
+        }
+
+        [Fact]
+        public void CreateControllerModelAndActionModel_UseDefaultAuthorizationPolicyProvider()
+        {
+            // Arrange
+            var requirements = new IAuthorizationRequirement[] {
+                new AssertionRequirement((con) => { return true; })
+            };
+            var authorizationPolicy = new AuthorizationPolicy(requirements, new string[] { "dingos" });
+            var authOptions = new TestOptionsManager<AuthorizationOptions>();
+            authOptions.Value.AddPolicy("Base", authorizationPolicy);
+            var policyProvider = new DefaultAuthorizationPolicyProvider(authOptions);
+
+            var provider = new AuthorizationApplicationModelProvider(policyProvider);
+            var defaultProvider = new DefaultApplicationModelProvider(new TestOptionsManager<MvcOptions>());
+
+            var context = new ApplicationModelProviderContext(new[] { typeof(BaseController).GetTypeInfo() });
+
+
+            // Act
+            defaultProvider.OnProvidersExecuting(context);
+            provider.OnProvidersExecuting(context);
+
+            // Assert
+            var controller = Assert.Single(context.Result.Controllers);
+            Assert.Empty(controller.Filters);
+            var action = Assert.Single(controller.Actions);
+            var actionFilter = Assert.Single(action.Filters);
+
+            var authorizationFilter = ((AuthorizeFilter)actionFilter);
+            Assert.NotNull(authorizationFilter.Policy);
+            Assert.Null(authorizationFilter.AuthorizeData);
+            Assert.Null(authorizationFilter.PolicyProvider);
         }
 
         [Fact]
@@ -134,7 +169,7 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             var context = new ApplicationModelProviderContext(new[] { typeof(BaseController).GetTypeInfo() });
             defaultProvider.OnProvidersExecuting(context);
             var authorizeData = new List<IAuthorizeData> {
-                new AuthorizeAttribute("It's a Policy!")
+                new AuthorizeAttribute("POLICY")
             };
 
             // Act
@@ -146,9 +181,13 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             var controller = Assert.Single(context.Result.Controllers);
             Assert.Empty(controller.Filters);
             var action = Assert.Single(controller.Actions);
-            Assert.Single(action.Filters);
+            var actionFilter = Assert.Single(action.Filters);
 
-            authorizationPolicyProviderMock.Verify(s => s.GetPolicyAsync(It.IsAny<string>()), Times.Exactly(2));
+            authorizationPolicyProviderMock.Verify(s => s.GetPolicyAsync("POLICY"), Times.Exactly(2));
+            var authorizationFilter = ((AuthorizeFilter)actionFilter);
+            Assert.Null(authorizationFilter.Policy);
+            Assert.NotNull(authorizationFilter.AuthorizeData);
+            Assert.NotNull(authorizationFilter.PolicyProvider);
         }
 
         [Fact]
