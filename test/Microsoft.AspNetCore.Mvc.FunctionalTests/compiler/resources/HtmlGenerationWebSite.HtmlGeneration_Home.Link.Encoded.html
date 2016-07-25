@@ -41,6 +41,12 @@
     <link href="HtmlEncode[[/styles/site.min.css?a=b&c=d]]" rel="stylesheet" data-extra="test" title='"the" title' />
 <meta name="x-stylesheet-fallback-test" content="" class="HtmlEncode[[hidden]]" /><script>!function(a,b,c,d){var e,f=document,g=f.getElementsByTagName("SCRIPT"),h=g[g.length-1].previousElementSibling,i=f.defaultView&&f.defaultView.getComputedStyle?f.defaultView.getComputedStyle(h):h.currentStyle;if(i&&i[a]!==b)for(e=0;e<c.length;e++)f.write('<link href="'+c[e]+'" '+d+"/>")}("JavaScriptEncode[[visibility]]","JavaScriptEncode[[hidden]]",["JavaScriptEncode[[HtmlEncode[[/styles/site.css?a=b&c=d]]]]"], "JavaScriptEncode[[rel="stylesheet" data-extra="test" title='"the" title' ]]");</script>
 
+    <!-- Fallback to static href with dynamic attributes -->
+    <link href="HtmlEncode[[/styles/site.min.css?a=b&c=d]]" rel="HtmlEncode[[stylesheet]]" data-extra="HtmlEncode[[test]]" title='HtmlEncode[[sylesheet"the" title]]' />
+
+    <!-- Fallback to static href with custom rel -->
+    <link href="HtmlEncode[[/styles/site.min.css?a=b&c=d]]" rel="x-stylesheet" />
+
     <!-- Fallback from globbed href to static href -->
     
 <meta name="x-stylesheet-fallback-test" content="" class="HtmlEncode[[hidden]]" /><script>!function(a,b,c,d){var e,f=document,g=f.getElementsByTagName("SCRIPT"),h=g[g.length-1].previousElementSibling,i=f.defaultView&&f.defaultView.getComputedStyle?f.defaultView.getComputedStyle(h):h.currentStyle;if(i&&i[a]!==b)for(e=0;e<c.length;e++)f.write('<link href="'+c[e]+'" '+d+"/>")}("JavaScriptEncode[[visibility]]","JavaScriptEncode[[hidden]]",["JavaScriptEncode[[HtmlEncode[[/styles/site.css]]]]"], "JavaScriptEncode[[rel="stylesheet" data-extra="test" ]]");</script>

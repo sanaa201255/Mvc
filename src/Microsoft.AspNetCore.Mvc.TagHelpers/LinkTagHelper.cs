@@ -50,7 +50,6 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
         private const string HrefAttributeName = "href";
         private const string RelAttributeName = "rel";
         private static readonly Func<Mode, Mode, int> Compare = (a, b) => a - b;
-        private static readonly TagHelperAttribute RelAttribute = new TagHelperAttribute("rel", "stylesheet");
 
         private FileVersionProvider _fileVersionProvider;
 
@@ -289,7 +288,7 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
                 }
             }
 
-            if (mode == Mode.Fallback)
+            if (mode == Mode.Fallback && HasRelStylesheet(output.Attributes))
             {
                 string resolvedUrl;
                 if (TryResolveUrl(FallbackHref, resolvedUrl: out resolvedUrl))
@@ -362,8 +361,6 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
 
             builder.AppendHtml(", \"");
 
-            var relAdded = false;
-
             // Perf: Avoid allocating enumerator
             for (var i = 0; i < attributes.Count; i++)
             {
@@ -373,18 +370,8 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
                     continue;
                 }
 
-                if (string.Equals(attribute.Name, RelAttributeName, StringComparison.OrdinalIgnoreCase))
-                {
-                    relAdded = true;
-                }
-
                 attribute.WriteTo(StringWriter, HtmlEncoder);
                 StringWriter.Write(' ');
-            }
-
-            if (!relAdded)
-            {
-                RelAttribute.WriteTo(StringWriter, HtmlEncoder);
             }
 
             var stringBuilder = StringWriter.GetStringBuilder();
@@ -394,6 +381,36 @@ namespace Microsoft.AspNetCore.Mvc.TagHelpers
             builder.AppendHtml(encodedScriptTags);
 
             builder.AppendHtml("\");</script>");
+        }
+
+        private bool HasRelStylesheet(TagHelperAttributeList attributes)
+        {
+            TagHelperAttribute relAttribute;
+            if (!attributes.TryGetAttribute(RelAttributeName, out relAttribute) ||
+                relAttribute.Value == null)
+            {
+                return false;
+            }
+
+            var attributeValue = relAttribute.Value;
+            var contentValue = attributeValue as IHtmlContent;
+            var stringValue = attributeValue as string;
+            if (contentValue != null)
+            {
+                contentValue.WriteTo(StringWriter, HtmlEncoder);
+                stringValue = StringWriter.ToString();
+
+                // Reset writer
+                StringWriter.GetStringBuilder().Clear();
+            }
+            else if (stringValue == null)
+            {
+                stringValue = attributeValue.ToString();
+            }
+
+            var hasRelStylesheet = string.Equals("stylesheet", stringValue, StringComparison.Ordinal);
+
+            return hasRelStylesheet;
         }
 
         private void AppendFallbackHrefs(TagHelperContent builder, IReadOnlyList<string> fallbackHrefs)
