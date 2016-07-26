@@ -8,15 +8,8 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ObjectPool;
 using Moq;
 using Xunit;
 
@@ -97,7 +90,8 @@ namespace Microsoft.AspNetCore.Mvc.Internal
         public void OnProvidersExecuting_DefaultPolicyProvider_NoAuthorizationData_NoFilterCreated()
         {
             // Arrange
-            var requirements = new IAuthorizationRequirement[] {
+            var requirements = new IAuthorizationRequirement[]
+            {
                 new AssertionRequirement((con) => { return true; })
             };
             var authorizationPolicy = new AuthorizationPolicy(requirements, new string[] { "dingos" });
@@ -119,10 +113,11 @@ namespace Microsoft.AspNetCore.Mvc.Internal
         }
 
         [Fact]
-        public async void OnProvidersExecuting_NonDefaultPolicyProvider_HasNoPolicy_HasPolicyProviderAndAuthorizeData()
+        public void OnProvidersExecuting_NonDefaultPolicyProvider_HasNoPolicy_HasPolicyProviderAndAuthorizeData()
         {
             // Arrange
-            var requirements = new IAuthorizationRequirement[] {
+            var requirements = new IAuthorizationRequirement[]
+            {
                 new AssertionRequirement((con) => { return true; })
             };
             var authorizationPolicy = new AuthorizationPolicy(requirements, new string[] { "dingos" });
@@ -136,18 +131,6 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             var defaultProvider = new DefaultApplicationModelProvider(new TestOptionsManager<MvcOptions>());
             var action = GetBaseControllerActionModel(provider, defaultProvider);
             var actionFilter = Assert.IsType<AuthorizeFilter>(Assert.Single(action.Filters));
-
-            var httpContext = GetHttpContext();
-            var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
-
-            var authorizationFilterContext = new AuthorizationFilterContext(actionContext, action.Filters);
-
-            // Act
-            await actionFilter.OnAuthorizationAsync(authorizationFilterContext);
-            await actionFilter.OnAuthorizationAsync(authorizationFilterContext);
-
-            // Assert
-            authorizationPolicyProviderMock.Verify(s => s.GetPolicyAsync("POLICY"), Times.Exactly(2));
 
             Assert.Null(actionFilter.Policy);
             Assert.NotNull(actionFilter.AuthorizeData);
@@ -183,7 +166,8 @@ namespace Microsoft.AspNetCore.Mvc.Internal
         {
             var context = new ApplicationModelProviderContext(new[] { typeof(BaseController).GetTypeInfo() });
             applicationModelProvider.OnProvidersExecuting(context);
-            var authorizeData = new List<IAuthorizeData> {
+            var authorizeData = new List<IAuthorizeData>
+            {
                 new AuthorizeAttribute("POLICY")
             };
 
@@ -194,51 +178,6 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             var action = Assert.Single(controller.Actions);
 
             return action;
-        }
-
-        private static IServiceProvider GetServices()
-        {
-            var serviceCollection = new ServiceCollection();
-            serviceCollection.AddAuthorization();
-            serviceCollection.AddMvc();
-            serviceCollection
-                .AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>()
-                .AddTransient<ILoggerFactory, LoggerFactory>()
-                .AddTransient<ILogger<DefaultAuthorizationService>, Logger<DefaultAuthorizationService>>();
-
-            return serviceCollection.BuildServiceProvider();
-        }
-
-        private static HttpContext GetHttpContext()
-        {
-            var httpContext = new DefaultHttpContext();
-
-            httpContext.RequestServices = GetServices();
-            return httpContext;
-        }
-
-
-        private class ChangingAuthorizationPolicyProvider : IAuthorizationPolicyProvider
-        {
-            public int CallCount = 0;
-
-            public Task<AuthorizationPolicy> GetDefaultPolicyAsync()
-            {
-                throw new NotImplementedException();
-            }
-
-            public Task<AuthorizationPolicy> GetPolicyAsync(string policyName)
-            {
-                CallCount++;
-
-                var authorizationPolicyBuilder = new AuthorizationPolicyBuilder();
-                for (var i = 0; i < CallCount; i++)
-                {
-                    authorizationPolicyBuilder.AddRequirements(new NameAuthorizationRequirement("require" + i));
-                }
-
-                return Task.FromResult(authorizationPolicyBuilder.Build());
-            }
         }
 
         private class BaseController

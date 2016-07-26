@@ -87,7 +87,8 @@ namespace Microsoft.AspNetCore.Mvc.IntegrationTests
             {
                 GetPolicyCount++;
 
-                var requirements = new IAuthorizationRequirement[] {
+                var requirements = new IAuthorizationRequirement[]
+                {
                     new AssertionRequirement((con) => { return true; })
                 };
                 return Task.FromResult(new AuthorizationPolicy(requirements, new string[] { }));
