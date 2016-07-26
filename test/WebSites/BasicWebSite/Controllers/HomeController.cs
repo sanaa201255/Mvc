@@ -16,6 +16,8 @@ namespace BasicWebSite.Controllers
             return View();
         }
 
+        // Keep the return type as object to ensure that we don't
+        // wrap IActionResult instances into ObjectResults.
         public object PlainView()
         {
             return View();

@@ -2368,8 +2368,7 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             filter.Setup(f => f.OnActionExecuting(It.IsAny<ActionExecutingContext>())).Verifiable();
             filter
                 .Setup(f => f.OnActionExecuted(It.IsAny<ActionExecutedContext>()))
-                .Callback<ActionExecutedContext>(c => result = c.Result)
-                .Verifiable();
+                .Callback<ActionExecutedContext>(c => result = c.Result);
 
             var invoker = CreateInvoker(
                 new[] { filter.Object },
@@ -2395,8 +2394,7 @@ namespace Microsoft.AspNetCore.Mvc.Internal
             filter.Setup(f => f.OnActionExecuting(It.IsAny<ActionExecutingContext>())).Verifiable();
             filter
                 .Setup(f => f.OnActionExecuted(It.IsAny<ActionExecutedContext>()))
-                .Callback<ActionExecutedContext>(c => result = c.Result)
-                .Verifiable();
+                .Callback<ActionExecutedContext>(c => result = c.Result);
 
             var invoker = CreateInvoker(
                 new[] { filter.Object },
